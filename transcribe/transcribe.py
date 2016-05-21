@@ -8,13 +8,15 @@ import speech_recognition as sr
 import os
 import sys
 
-BING_KEY='5755fcdf9fd340818436512ccbc82fda'
+BING_KEY = os.getenv('BING_KEY')
 
 def text(filepath):
     r = sr.Recognizer()
     with sr.AudioFile(filepath) as source:
         audio = r.record(source) # read the entire audio file
     return r.recognize_bing(audio, key=BING_KEY)
+    # return r.recognize_ibm(audio, username=IBM_USERNAME, password=IBM_PASSWORD)
+    # return r.recognize_sphinx(audio)
 
 if __name__ == '__main__':
     filepath = sys.argv[1]
