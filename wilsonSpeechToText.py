@@ -13,8 +13,8 @@ keywordsParam = urllib.quote_plus(keywords)
 keywordsParam = keywordsParam.replace("+", "%20")
 url = url + '&keywords=' + keywordsParam
 
-name = '286a8577-9c0b-4a6c-946e-93ac49cf71b8'
-password = 'J44aZuUWhf4g'
+name = ''
+password = ''
 
 file_paths = glob.glob('*.WAV')
 
