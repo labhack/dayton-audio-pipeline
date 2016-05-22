@@ -23,21 +23,19 @@ class notch(gr.top_block):
         # Variables
         ##################################################
         self.samp_rate = samp_rate = 16000
-
+        self.low_cutoff = low_cutoff = 1000
+        self.high_cutoff = high_cutoff = 2000
+        self.transition_width = transition_width = 10
+        self.input_file = ""
+        self.output_file = ""
+        
+        self.update_filter()
+        
         ##################################################
         # Blocks
         ##################################################
-        self.blocks_wavfile_source_0 = blocks.wavfile_source("/home/bward/Documents/Labhack 2016/Initial Audio Files/Dayton Fire Department/454 E Fifth St/PCM/Recorded on 19-Feb-2009 at 18.57.33 (-AI8Q#5D02357272).WAV", False)
-        self.blocks_wavfile_sink_0 = blocks.wavfile_sink("/home/bward/Documents/Labhack 2016/Cleaned Audio/cleaned_audio.wav", 1, samp_rate, 16)
-        self.band_reject_filter_0 = filter.fir_filter_fff(1, firdes.band_reject(
-        	1, samp_rate, 1000, 1050, 10, firdes.WIN_HAMMING, 6.76))
-
-        ##################################################
-        # Connections
-        ##################################################
-        self.connect((self.band_reject_filter_0, 0), (self.blocks_wavfile_sink_0, 0))    
-        self.connect((self.blocks_wavfile_source_0, 0), (self.band_reject_filter_0, 0))    
-
+        
+            
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -46,15 +44,35 @@ class notch(gr.top_block):
         self.samp_rate = samp_rate
         self.band_reject_filter_0.set_taps(firdes.band_reject(1, self.samp_rate, 1000, 1050, 10, firdes.WIN_HAMMING, 6.76))
 
-
-if __name__ == '__main__':
-    parser = OptionParser(option_class=eng_option, usage="%prog: [options]")
-    (options, args) = parser.parse_args()
-    tb = notch()
-    tb.start()
-    try:
-        raw_input('Press Enter to quit: ')
-    except EOFError:
-        pass
-    tb.stop()
-    tb.wait()
+    def update_filter(self):
+        self.band_reject_filter_0 = filter.fir_filter_fff(1, firdes.band_reject(1, self.samp_rate, self.low_cutoff, self.high_cutoff, self.transition_width, firdes.WIN_HAMMING, 6.76))
+        	
+	def setup_blocks(self):
+	    self.connect((self.band_reject_filter_0, 0), (self.blocks_wavfile_sink_0, 0))    
+        self.connect((self.blocks_wavfile_source_0, 0), (self.band_reject_filter_0, 0))
+        
+    def update_wav_source(self):
+        self.blocks_wavfile_source_0 = blocks.wavfile_source(self.input_file, False)
+        
+    def update_wav_sink(self):
+        self.blocks_wavfile_sink_0 = blocks.wavfile_sink(self.output_file, 1, self.samp_rate, 16)
+        
+    def set_low_cutoff(self, cutoff):
+        self.low_cutoff = cutoff
+        self.update_filter()
+        
+    def set_high_cutoff(self, cutoff):
+        self.high_cutoff = cutoff
+        self.update_filter()
+        
+    def set_transition_width(self, transition_width):
+        self.transition_width = transition_width
+        self.update_filter()
+        
+    def set_input_file(self, input_file):
+        self.input_file = str(input_file)
+        self.update_wav_source()
+        
+    def set_output_file(self, output_file):
+        self.output_file = str(output_file)
+        self.update_wav_sink()
