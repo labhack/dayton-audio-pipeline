@@ -1,4 +1,5 @@
 import sys
+import os.path
 from PyQt4 import QtCore, QtGui
 from top_block import top_block
 
@@ -10,12 +11,18 @@ class MyForm(QtGui.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         QtCore.QObject.connect(self.ui.btnFileBrowser, QtCore.SIGNAL("clicked()"), self.selectFile)
-        QtCore.QObject.connect(self.ui.btnPlayFile, QtCore.SIGNAL("clicked()"), self.playFile)
+        QtCore.QObject.connect(self.ui.btnDirBrowser, QtCore.SIGNAL("clicked()"), self.selectDir)
+        QtCore.QObject.connect(self.ui.btnFilterFile, QtCore.SIGNAL("clicked()"), self.playFile)
         QtCore.QObject.connect(self, QtCore.SIGNAL("triggered()"), self.closeWindow)
                 
     def selectFile(self):
-        self.ui.txtFilename.setText(QtGui.QFileDialog.getOpenFileName())
+        self.input_file = QtGui.QFileDialog.getOpenFileName()
+        self.ui.txtFilename.setText(self.input_file)
 
+    def selectDir(self):
+        self.output_dir = QtGui.QFileDialog.getExistingDirectory(self, 'Select Output Directory')
+        self.ui.txtOutputDir.setText(self.output_dir)
+        
     def closeWindow(self):
         try:
             tb.stop()
@@ -24,9 +31,15 @@ class MyForm(QtGui.QMainWindow):
             pass
             
     def playFile(self):
+        if os.path.isfile(self.input_file) is not True:
+            print("Path is not a file!")
+            return
         tb = top_block()
+        tb.set_input_file(self.input_file)
+        tb.setup_blocks()
         tb.start()
-    
+        tb.wait()
+        
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     myapp = MyForm()
