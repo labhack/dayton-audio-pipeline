@@ -13,8 +13,6 @@ keywordsParam = urllib.quote_plus(keywords)
 keywordsParam = keywordsParam.replace("+", "%20")
 url = url + '&keywords=' + keywordsParam
 
-print url
-
 name = ''
 password = ''
 
@@ -30,9 +28,13 @@ for i in range(0, len(file_paths)):
    headers = {'Content-Type': 'audio/wav'}
 
    r = requests.post(url=url, headers=headers, auth=HTTPBasicAuth(name, password), data=FileData)
-   
-   print r.text
 
-   with open(os.path.splitext(FilePath)[0] + '.json', 'w') as outfile:
-    json.dump(r.json(), outfile)
+   jsonOutput = r.text
+
+   print jsonOutput
+
+   jsonFile = open(os.path.splitext(FilePath)[0] + '.json','w')
+   jsonFile.write(jsonOutput) # python will convert \n to os.linesep
+   jsonFile.close()
+
 
