@@ -5,7 +5,7 @@ from requests.auth import HTTPBasicAuth
 import json
 
 url = 'https://stream.watsonplatform.net/speech-to-text/api/v1/recognize'
-name = '91acc080-c273-4054-b16b-a11e70e3a591'
+name = os.getenv('watson_name')
 password = os.getenv('watson_password')
 
 file_paths = glob.glob('*.WAV')

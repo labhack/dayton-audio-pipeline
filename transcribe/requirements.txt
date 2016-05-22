@@ -1,6 +1,7 @@
 appnope==0.1.0
 backports.shutil-get-terminal-size==1.0.0
 bob==2.0.7
+click==6.6
 decorator==4.0.9
 entrypoints==0.2.2
 gnureadline==6.3.3
@@ -25,6 +26,7 @@ ptyprocess==0.5.1
 Pygments==2.1.3
 pyzmq==15.2.0
 qtconsole==4.2.1
+requests==2.10.0
 simplegeneric==0.8.1
 SpeechRecognition==3.4.5
 terminado==0.6
