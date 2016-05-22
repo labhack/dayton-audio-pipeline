@@ -11,6 +11,7 @@ import json
 import os
 import subprocess
 import time
+import shlex
 import re
 
 import bing, watson
@@ -21,7 +22,7 @@ SOX_CLEANSED_FILENAME = '_cleansed_with_sox.wav'
 
 elapsed_parser = re.compile(r'(?P<hr>\d\d):(?P<min>\d\d):(?P<sec>\d\d)\.(?P<hsec>\d\d)\s')
 def audio_file_stats():
-    raw_result = subprocess.check_output(['soxi', SOX_CLEANSED_FILENAME])
+    raw_result = subprocess.check_output(['soxi', shlex.quote(SOX_CLEANSED_FILENAME)])
     raw_result = raw_result.decode('utf8')
     result = {}
     for line in raw_result.strip().splitlines():
@@ -31,29 +32,6 @@ def audio_file_stats():
             elapsed = elapsed_parser.search(v).groupdict()
             result['seconds'] = int(elapsed['hr']) * 3600 + int(elapsed['min']) * 60 + int(elapsed['sec']) + int(elapsed['hsec']) * 0.01
     return result
-
-@click.command()
-@click.argument('filepaths', nargs=-1, required=True)
-@click.option('-e', '--engine', default='watson',
-              help='Speech-to-text engine: watson or bing')
-@click.option('-p', '--play', type=bool, default=False,
-    help='Use `open` (on mac) to play the audio')
-def transcribe(engine, play, filepaths):
-    logging.debug('Begin transcribing engine {} filepath {}'.
-        format(engine, filepath))
-    if engine == 'bing':
-        transcriber = bing.Transcriber()
-    else:
-        transcriber = watson.Transcriber()
-    for filepattern in filepaths:
-        for filepath in glob.glob(filepattern):
-            logging.info('Playing the file')
-            logging.info('Applying {} to {}'.format(transcriber.name, filepath))
-            logging.info('{} bytes'.format(os.stat(filepath).st_size))
-            logging.info('applying sox')
-            logging.info('timing...')
-            result = json.dumps(transcriber.json(filepath), indent=2)
-            yield result
 
 @click.command()
 @click.option('-e', '--engine', default='watson',
@@ -70,10 +48,12 @@ def transcribe(engine, play, filepaths):
         transcriber = watson.Transcriber()
     result = {}
     for filepattern in filepaths:
-        for filepath in glob.glob(filepattern):
+        for filepath in glob.glob(filepattern, recursive=True):
+            if not filepath.lower().endswith('.wav'):
+                continue
             logging.info('Applying {} to {}'.format(transcriber.name, filepath))
             logging.debug('applying sox')
-            subprocess.call(['sox', filepath, '-b16', SOX_CLEANSED_FILENAME])
+            subprocess.call(['sox', shlex.quote(filepath), '-b16', SOX_CLEANSED_FILENAME])
             start_time = time.monotonic()
             result[filepath] = transcriber.json(SOX_CLEANSED_FILENAME)
             result[filepath]['file_stats'] = audio_file_stats()
