@@ -12,8 +12,21 @@
 # from: https://github.com/tyiannak/pyAudioAnalysis/wiki/5.-Segmentation
 # python audioAnalysis.py speakerDiarization -i '/home/apn/labhack/data/Initial Audio Files/Dayton Fire Department/1141 Main/Recorded on 30-Oct-2007 at 09.49.53 ()YWJFT8D02357272)-clean.wav' --num 0
 
+REDO = False
+
+# add logging information
+import logging
+mylog = logging.getLogger('segmentation')
+mylog.level = logging.DEBUG
+ch = logging.StreamHandler()
+formatter = logging.Formatter('%(levelname)s - %(name)s - %(message)s')
+ch.setFormatter(formatter)
+mylog.addHandler(ch)
+
 import sys,os
 sys.path.append('/home/apn/sw/pyAudioAnalysis') # for pyAudioAnalysis
+
+import numpy as np
 
 # audioSegmentation is in pyAudioAnalysis
 import audioSegmentation as aS
@@ -49,57 +62,81 @@ import audioSegmentation as aS
 # these need to be overridden, for now, I hard-coded audioSegmentation.py to my full path
 # used a variable DATA_DIR at the top of audioSegmentation.py
 
-# find the input file - first input argument
-#inputFile = sys.argv[1]
+# find the input file - first input argument - allow arbitrary input files
+inputFiles = sys.argv[1:]
 # hardcode for test
-inputFile = '/home/apn/labhack/data/Initial Audio Files/Dayton Fire Department/1141 Main/Recorded on 30-Oct-2007 at 09.49.53 ()YWJFT8D02357272)-clean.wav'
+#inputFile = '/home/apn/labhack/data/Initial Audio Files/Dayton Fire Department/1141 Main/Recorded on 30-Oct-2007 at 09.49.53 ()YWJFT8D02357272)-clean.wav'
 
-numOfSpeakers = 0 # set to zero for unknown - algorithm decides
-                  # set to number if known
-segInfo = aS.speakerDiarization(inputFile,numOfSpeakers)
-
-# segInfo contains a list
-# segInfo[0] is the time step of the analysis
-# segInfo[1] is np array of the speaker ID at each time step
-
-# find the difference
-dId = np.diff(segInfo[1])
-
-# anywhere that dId is non-zero the speaker changes
-chgId = np.where(dId!=0)[0]
-
-# use the indices to write out a text file containing the timing information
-# for segmentation
-dirname,basename = os.path.split(inputFile)
-basename,ext     = os.path.splitext(basename)
-outFile          = os.path.sep.join([dirname,basename + '.seg']) 
-
-
-with open(outFile,'w') as f:
-    def dumbWriteFunc(f,segmentId,speakerId,startTime,stopTime):
-        txt = '%d, %d, %f, %f'%(\
+def dumbWriteFunc(f,segmentId,speakerId,startTime,stopTime):
+    txt = '%d, %d, %f, %f'%(\
                                 segmentId,
                                 speakerId,
                                 startTime,
                                 stopTime)
-        f.write(txt + '\n')
-        return None
- 
-    
-    for ii,idx in enumerate(chgId):
-        # write a line for each segment
-        segmentId = ii
-        speakerId = segInfo[1][chgId[ii]]
-        startTime = chgId[ii-1]*segInfo[0] if ii>0 else 0.0
-        stopTime  = chgId[ii]*segInfo[0]
-        dumbWriteFunc(f,segmentId,speakerId,startTime,stopTime)
-    # there is one final segment to account for
-    segmentId += 1
-    speakerId  = segInfo[1][-1]
-    startTime  = stopTime
-    stopTime   = len(segInfo[1])*segInfo[0]
-    dumbWriteFunc(f,segmentId,speakerId,startTime,stopTime)
+    f.write(txt + '\n')
+    return None
         
+
+for inputFile in inputFiles:
+
+    mylog.info('Segmenting: %s',inputFile)
+    
+    # not sure how this code handles multiple channels in the inputFile
+
+    numOfSpeakers = 0 # set to zero for unknown - algorithm decides
+                      # set to number if known
+
+    # use the indices to write out a text file containing the timing information
+    # for segmentation
+    dirname,basename = os.path.split(inputFile)
+    basename,ext     = os.path.splitext(basename)
+    outFile          = os.path.sep.join([dirname,basename + '-seg.txt']) 
+                      
+    try:
+        segInfo = aS.speakerDiarization(inputFile,numOfSpeakers)
+    except:
+        # if the segmentation fails, log it and continue
+        # the code will fail if there is only one speaker in the file
+        # i.e. this file ./Initial Audio Files/Dayton Fire Department/Haz-Mat Incident/14-23-28-clean.wav
+        mylog.warning('Segmentation failed: %s', inputFile)
+
+        with open(outFile,'w') as f:
+            # write a single line to the file, -1 as duration indicates entire file
+            dumbWriteFunc(f,0,0,0.0,-1.0)
+        continue
+
+    # segInfo contains a list
+    # segInfo[0] is the time step of the analysis
+    # segInfo[1] is np array of the speaker ID at each time step
+
+    # find the difference
+    dId = np.diff(segInfo[1])
+
+    # anywhere that dId is non-zero the speaker changes
+    chgId = np.where(dId!=0)[0]
+
+    # if outFile exists and we set REDO, then process, otherwise skip
+    if os.path.isfile(outFile) and not REDO:
+        mylog.info('%s exists, skipping',outFile)
+        continue
+        
+
+    with open(outFile,'w') as f:
+
+        for ii,idx in enumerate(chgId):
+            # write a line for each segment
+            segmentId = ii
+            speakerId = segInfo[1][chgId[ii]]
+            startTime = chgId[ii-1]*segInfo[0] if ii>0 else 0.0
+            stopTime  = chgId[ii]*segInfo[0]
+            dumbWriteFunc(f,segmentId,speakerId,startTime,stopTime)
+        # there is one final segment to account for
+        segmentId += 1
+        speakerId  = segInfo[1][-1]
+        startTime  = stopTime
+        stopTime   = len(segInfo[1])*segInfo[0]
+        dumbWriteFunc(f,segmentId,speakerId,startTime,stopTime)
+
         
 # for interferer mitigtation consider:
 # Non-Stationary Gabor Transform http://grrrr.org/research/software/nsgt/
