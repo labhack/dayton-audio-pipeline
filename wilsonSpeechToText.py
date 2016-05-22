@@ -42,3 +42,18 @@ for i in range(0, len(file_paths)):
    transcriptFile = open(os.path.splitext(FilePath)[0] + '.txt','w')
    transcriptFile.write(transcriptText)
    transcriptFile.close()
+
+   testText = '{\"text\": \" + transcriptText + \"}'
+
+   toneURL = 'https://gateway.watsonplatform.net/tone-analyzer/api/v3/tone?version=2016-05-18'
+   toneName = ''
+   tonePassword = ''
+   toneHeader = {'Content-Type': 'application/json'}
+
+   toneRequest = requests.post(url=toneURL, headers=toneHeader, auth=HTTPBasicAuth(toneName, tonePassword), data=testText)
+
+   toneFile = open(os.path.splitext(FilePath)[0] + 'Tone.txt','w')
+   toneFile.write(toneRequest.text)
+   toneFile.close()
+
+   
