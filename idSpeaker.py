@@ -2,9 +2,14 @@
 #
 # first input argument is name of inputFile to parse and split
 
+# I created a fork of this repo:
+# https://github.com/tyiannak/pyAudioAnalysis @ 3799c3ab4cc5d0d5f8d60e9105f0d59f74976909
+# at
+# https://github.com/anielsen001/pyAudioAnalys to put labhack mods
 # find ~/sw/pyAudioAnalysis/audioAnalysis.py
 
 # this example worked:
+# from: https://github.com/tyiannak/pyAudioAnalysis/wiki/5.-Segmentation
 # python audioAnalysis.py speakerDiarization -i '/home/apn/labhack/data/Initial Audio Files/Dayton Fire Department/1141 Main/Recorded on 30-Oct-2007 at 09.49.53 ()YWJFT8D02357272)-clean.wav' --num 0
 
 import sys,os
@@ -96,3 +101,10 @@ with open(outFile,'w') as f:
     dumbWriteFunc(f,segmentId,speakerId,startTime,stopTime)
         
         
+# for interferer mitigtation consider:
+# Non-Stationary Gabor Transform http://grrrr.org/research/software/nsgt/
+# python code here: https://github.com/grrrr/nsgt
+# reference here: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC4111459/
+#
+# python adaptive filters:
+# https://github.com/matousc89/padasip
