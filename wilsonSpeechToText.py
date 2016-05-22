@@ -13,8 +13,8 @@ keywordsParam = urllib.quote_plus(keywords)
 keywordsParam = keywordsParam.replace("+", "%20")
 url = url + '&keywords=' + keywordsParam
 
-name = ''
-password = ''
+name = '286a8577-9c0b-4a6c-946e-93ac49cf71b8'
+password = 'J44aZuUWhf4g'
 
 file_paths = glob.glob('*.WAV')
 
@@ -29,12 +29,16 @@ for i in range(0, len(file_paths)):
 
    r = requests.post(url=url, headers=headers, auth=HTTPBasicAuth(name, password), data=FileData)
 
-   jsonOutput = r.text
+   jsonOutput = json.loads(r.text)
 
-   print jsonOutput
+   #print jsonOutput
 
    jsonFile = open(os.path.splitext(FilePath)[0] + '.json','w')
-   jsonFile.write(jsonOutput) # python will convert \n to os.linesep
+   jsonFile.write(json.dumps(jsonOutput))
    jsonFile.close()
 
+   transcriptText = jsonOutput['results'][0]['alternatives'][0]['transcript']
 
+   transcriptFile = open(os.path.splitext(FilePath)[0] + '.txt','w')
+   transcriptFile.write(transcriptText)
+   transcriptFile.close()
