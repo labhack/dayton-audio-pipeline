@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# first input argument is name of inputFile to parse and split
+# first input argument is name of inputFile to parse and segment
 
 # I created a fork of this repo:
 # https://github.com/tyiannak/pyAudioAnalysis @ 3799c3ab4cc5d0d5f8d60e9105f0d59f74976909
